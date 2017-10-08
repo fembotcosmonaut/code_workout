@@ -12,12 +12,23 @@ dictionary-sample.py
 
 #### Goals:
 1. Parse the dictionary file (american-english) and only print words that are greater than 4 characters
+```bash
+awk 'length>4' /usr/share/dict/american-english
+```
+
 2. Parse the dictionary file and print the length and number of words of that length in csv. *Each line should be unique.*
 	```
     <num of chars in word>,<num of words of that length>
    	3,300
     ```
+```bash
+awk '{print length($0)}' /usr/share/dict/american-english > newabc.txt && awk 'NR == FNR {++ctr[$0]; next} {print $0 "," ctr[$1];}' newabc.txt{,} | uniq
+```
+
 3. Write a script that accepts one argument (a file name) to count the number of lines in the file
+```bash
+wc -l /usr/share/dict/american-english
+```
 
 #### For the bold:
 1. Re-write the dictionary-sample.py script in bash.
