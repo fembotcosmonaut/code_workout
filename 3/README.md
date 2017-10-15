@@ -53,9 +53,30 @@ The `thing_app.py` script will need to stay running in a console while you inter
 #### Goals:
 Use a name that is descriptive of the value you provide in all posted data.
 1. `GET` The current list of things posted.
+
+```bash
+GET http://localhost:5000/things
+```
+
 2. `POST` system load, free ram, and current used disk space for / with a new device name.
+
+```bash
+curl -H "Content-Type: application/json" -X POST -d "{\"device\":\"$(hostname)\", \"value\": {\"System Load\":\"$(uptime | cut -d' ' -f12,13,14,15 | tr -d ' ')\", \"Available RAM\": \"$(free -mh | cut -c40-45 | awk 'NR ==2,NR==3' | paste -sd ' ' - | tr -s ' ' | tr ' ' ',')\", \"Disk Usage\":\"$(df -h / | cut -c42-45 | awk 'NR ==2')\"},\"name\":\"System Infomration\"}" http://localhost:5000/things
+```
+
 3. Iterate through the list of all things and issue a `DELETE` to any record that doesn't match your device's exact hostname.
+
+Note: the 'awk NR' signified a range of lines you wish to delete, do not run this if you do not know the range
+```bash
+for i in $(GET http://localhost:5000/things | grep id | awk 'NR>=2&&NR<=13' | cut -d ' ' -f8 | sed 's/.$//'); do curl -X "DELETE" http://localhost:5000/things/$i; done
+```
+
 4. `GET` all the things and form the json output into CSV (Comma Seperated Values) with the device's name as the first value.
+
+Note: this will only work if the POST requests were all issued in the format from Goal #2.
+```bash
+GET http://localhost:5000/things | egrep 'device|Available RAM|Disk Usage|System Load' |  paste -sd ' ' - | sed 's/"//g;s/://g;s/device//g;s/System Load//g;s/Disk Usage//g;s/Available RAM//g;' |  tr -d ' ' | sed 's/worktop/\n&/g' | sed '/^$/d'
+```
 
 #### For the bold:
  Write a script that sends the system load to the thing api every 10 seconds. Write another script that reads from the api that posts free memory and the current date and time as an additional key and value when the 1 minute average excedes 15 minute average by at least 10%.
